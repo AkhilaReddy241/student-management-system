@@ -13,6 +13,7 @@ function AddStudent() {
     department: "",
     semester: "",
     phone: "",
+    password: "",
   });
 
   const [photo, setPhoto] = useState(null);
@@ -33,7 +34,8 @@ function AddStudent() {
       !student.email ||
       !student.department ||
       !student.semester ||
-      !student.phone
+      !student.phone ||
+      !student.password
     ) {
       toast.error("Please fill all fields");
       return;
@@ -46,11 +48,9 @@ function AddStudent() {
       formData.append("name", student.name);
       formData.append("email", student.email);
       formData.append("department", student.department);
-
-      // IMPORTANT: semester instead of year
       formData.append("semester", student.semester);
-
       formData.append("phone", student.phone);
+      formData.append("password", student.password);
 
       if (photo) {
         formData.append("photo", photo);
@@ -70,8 +70,13 @@ function AddStudent() {
 
       navigate("/students");
     } catch (err) {
-      console.log(err);
-      toast.error("Error Adding Student");
+      console.log("ADD STUDENT ERROR:", err);
+
+      const message =
+        err.response?.data?.message ||
+        "Error Adding Student";
+
+      toast.error(message);
     }
   };
 
@@ -162,6 +167,16 @@ function AddStudent() {
             placeholder="Phone"
             name="phone"
             value={student.phone}
+            onChange={handleChange}
+          />
+
+          {/* Password */}
+          <input
+            type="password"
+            className="form-control mb-3"
+            placeholder="Student Password"
+            name="password"
+            value={student.password}
             onChange={handleChange}
           />
 

@@ -145,9 +145,7 @@ function Dashboard() {
       ========================================== */}
 
       <div className="mb-4">
-        <h2 className="fw-bold">
-          Admin Dashboard
-        </h2>
+        
 
         <p className="text-muted">
           Welcome to Student Management System

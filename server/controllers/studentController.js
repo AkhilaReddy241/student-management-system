@@ -22,6 +22,9 @@ const createStudent = async (req, res) => {
       address,
     } = req.body;
 
+    console.log("Student body:", req.body);
+    console.log("Student photo:", req.file);
+
     if (
       rollNumber === undefined ||
       !name ||

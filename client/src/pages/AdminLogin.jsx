@@ -58,7 +58,7 @@ function AdminLogin() {
 
 
       const res = await axios.post(
-        "http://localhost:5000/api/admin/login",
+        "https://student-management-system-ult0.onrender.com/api/admin/login",
         {
           username: admin.username,
           password: admin.password,

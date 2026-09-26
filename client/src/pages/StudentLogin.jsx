@@ -39,7 +39,7 @@ function StudentLogin() {
       // ==========================================
 
       const res = await axios.post(
-        "http://localhost:5000/api/auth/student/login",
+        "https://student-management-system-ult0.onrender.com/api/auth/student/login",
         {
           email: email.trim().toLowerCase(),
           password: password,

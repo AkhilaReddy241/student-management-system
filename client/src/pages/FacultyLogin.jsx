@@ -60,7 +60,7 @@ function FacultyLogin() {
 
 
       const res = await axios.post(
-        "http://localhost:5000/api/auth/faculty/login",
+        "https://student-management-system-ult0.onrender.com/api/auth/faculty/login",
         {
           email: faculty.email,
           password: faculty.password,

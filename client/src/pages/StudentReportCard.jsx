@@ -23,7 +23,7 @@ function StudentReportCard() {
       setLoading(true);
 
       const res = await axios.get(
-        "http://localhost:5000/api/marks"
+        "https://student-management-system-ult0.onrender.com/api/marks"
       );
 
       const allMarks = res.data.data || [];

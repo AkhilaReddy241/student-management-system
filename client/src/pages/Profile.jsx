@@ -55,13 +55,13 @@ function Profile() {
 
       if (role === "admin") {
         profileUrl =
-          "http://localhost:5000/api/admin/profile";
+          "https://student-management-system-ult0.onrender.com/api/admin/profile";
       } else if (role === "student") {
         profileUrl =
-          "http://localhost:5000/api/students/profile";
+          "https://student-management-system-ult0.onrender.com/api/students/profile";
       } else if (role === "faculty") {
         profileUrl =
-          "http://localhost:5000/api/faculty/profile";
+          "https://student-management-system-ult0.onrender.com/api/faculty/profile";
       } else {
         toast.error("Invalid user role");
         setLoading(false);
@@ -179,7 +179,7 @@ function Profile() {
       }
 
       const res = await axios.put(
-        "http://localhost:5000/api/students/change-password",
+        "https://student-management-system-ult0.onrender.com/api/students/change-password",
         {
           currentPassword,
           newPassword,

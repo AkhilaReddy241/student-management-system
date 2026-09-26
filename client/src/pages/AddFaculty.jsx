@@ -26,7 +26,7 @@ function AddFaculty() {
 
   const getFaculty = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/faculty");
+      const res = await axios.get("https://student-management-system-ult0.onrender.com/api/faculty");
       setFaculty(res.data.data);
     } catch (err) {
       console.log(err);
@@ -44,13 +44,13 @@ function AddFaculty() {
     try {
       if (editingId) {
         await axios.put(
-          `http://localhost:5000/api/faculty/${editingId}`,
+          `https://student-management-system-ult0.onrender.com/api/faculty/${editingId}`,
           formData
         );
         toast.success("Faculty Updated Successfully");
       } else {
         await axios.post(
-          "http://localhost:5000/api/faculty",
+          "https://student-management-system-ult0.onrender.com/api/faculty",
           formData
         );
         toast.success("Faculty Added Successfully");
@@ -95,7 +95,7 @@ function AddFaculty() {
     if (!window.confirm("Delete Faculty?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/faculty/${id}`);
+      await axios.delete(`https://student-management-system-ult0.onrender.com/api/faculty/${id}`);
       toast.success("Faculty Deleted");
       getFaculty();
     } catch (err) {

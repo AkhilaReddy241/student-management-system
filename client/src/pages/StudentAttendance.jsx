@@ -38,7 +38,7 @@ function StudentAttendance() {
         }
 
         const res = await axios.get(
-          "http://localhost:5000/api/attendance/student",
+          "https://student-management-system-ult0.onrender.com/api/attendance/student",
           {
             params: {
               studentId: studentId,

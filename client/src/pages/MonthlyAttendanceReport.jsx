@@ -20,7 +20,7 @@ function MonthlyAttendanceReport() {
   const fetchReport = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/attendance/monthly-report",
+        "https://student-management-system-ult0.onrender.com/api/attendance/monthly-report",
         {
           params: {
             month,

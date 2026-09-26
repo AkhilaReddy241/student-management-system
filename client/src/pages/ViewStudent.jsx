@@ -14,7 +14,7 @@ function ViewStudent() {
   const getStudent = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/students/${id}`
+        `https://student-management-system-ult0.onrender.com/api/students/${id}`
       );
 
       setStudent(res.data.student);
@@ -41,7 +41,7 @@ function ViewStudent() {
           {student.photo && (
             <div className="text-center mb-4">
               <img
-                src={`http://localhost:5000/uploads/${student.photo}`}
+                src={`https://student-management-system-ult0.onrender.com/uploads/${student.photo}`}
                 alt={student.name}
                 className="img-thumbnail"
                 style={{

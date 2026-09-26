@@ -26,7 +26,7 @@ function SubjectManagement() {
   const getSubjects = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/subjects"
+        "https://student-management-system-ult0.onrender.com/api/subjects"
       );
 
       setSubjects(res.data.data || []);
@@ -48,7 +48,7 @@ function SubjectManagement() {
       if (editingId) {
 
         await axios.put(
-          `http://localhost:5000/api/subjects/${editingId}`,
+          `https://student-management-system-ult0.onrender.com/api/subjects/${editingId}`,
           formData
         );
 
@@ -57,7 +57,7 @@ function SubjectManagement() {
       } else {
 
         await axios.post(
-          "http://localhost:5000/api/subjects",
+          "https://student-management-system-ult0.onrender.com/api/subjects",
           formData
         );
 
@@ -109,7 +109,7 @@ function SubjectManagement() {
     try {
 
       await axios.delete(
-        `http://localhost:5000/api/subjects/${id}`
+        `https://student-management-system-ult0.onrender.com/api/subjects/${id}`
       );
 
       toast.success("Subject Deleted");

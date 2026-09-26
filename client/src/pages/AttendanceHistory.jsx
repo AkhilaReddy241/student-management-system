@@ -18,7 +18,7 @@ function AttendanceHistory() {
   const fetchAttendance = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/attendance"
+        "https://student-management-system-ult0.onrender.com/api/attendance"
       );
 
       setAttendance(res.data.data);
@@ -33,7 +33,7 @@ function AttendanceHistory() {
 
     try {
       await axios.delete(
-        `http://localhost:5000/api/attendance/${id}`
+        `https://student-management-system-ult0.onrender.com/api/attendance/${id}`
       );
 
       toast.success("Attendance Deleted");

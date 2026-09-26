@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 // API BASE URL
 // =====================================================
 
-const API = "http://localhost:5000/api";
+const API = "https://student-management-system-ult0.onrender.com/api";
 
 function Internal1() {
   // =====================================================

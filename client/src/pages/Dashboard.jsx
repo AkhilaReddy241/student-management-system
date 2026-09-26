@@ -26,7 +26,7 @@ function Dashboard() {
   const getStudents = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/students"
+        "https://student-management-system-ult0.onrender.com/api/students"
       );
 
       setStudents(
@@ -94,7 +94,7 @@ function Dashboard() {
       }
 
       const res = await axios.post(
-        "http://localhost:5000/api/admin/generate-student-passwords",
+        "https://student-management-system-ult0.onrender.com/api/admin/generate-student-passwords",
         {},
         {
           headers: {

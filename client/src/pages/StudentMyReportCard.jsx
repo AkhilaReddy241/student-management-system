@@ -89,7 +89,7 @@ function StudentMyReportCard() {
       // =================================================
 
       const url =
-        `http://localhost:5000/api/report-card/my-report-card?studentId=${studentId}&semester=${semester}`;
+        `https://student-management-system-ult0.onrender.com/api/report-card/my-report-card?studentId=${studentId}&semester=${semester}`;
 
       console.log("REPORT CARD URL:", url);
 

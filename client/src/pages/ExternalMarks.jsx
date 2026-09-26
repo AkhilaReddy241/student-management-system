@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 function ExternalMarks() {
-  const API = "http://localhost:5000/api";
+  const API = "https://student-management-system-ult0.onrender.com/api";
 
   const [students, setStudents] = useState([]);
   const [marks, setMarks] = useState([]);

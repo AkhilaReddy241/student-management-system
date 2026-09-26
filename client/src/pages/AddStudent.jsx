@@ -57,7 +57,7 @@ function AddStudent() {
       }
 
       await axios.post(
-        "http://localhost:5000/api/students",
+        "https://student-management-system-ult0.onrender.com/api/students",
         formData,
         {
           headers: {

@@ -25,7 +25,7 @@ function Student() {
   const getStudents = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/students"
+        "https://student-management-system-ult0.onrender.com/api/students"
       );
 
       console.log("FULL API RESPONSE:", res.data);
@@ -87,7 +87,7 @@ function Student() {
 
     try {
       await axios.delete(
-        `http://localhost:5000/api/students/${id}`
+        `https://student-management-system-ult0.onrender.com/api/students/${id}`
       );
 
       toast.success(
@@ -401,7 +401,7 @@ function Student() {
                     <img
                       src={
                         student.photo
-                          ? `http://localhost:5000/uploads/${student.photo}`
+                          ? `https://student-management-system-ult0.onrender.com/uploads/${student.photo}`
                           : "https://via.placeholder.com/60"
                       }
                       alt={

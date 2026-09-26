@@ -27,7 +27,7 @@ function EditStudent() {
  const getStudent = async () => {
   try {
     const res = await axios.get(
-      `http://localhost:5000/api/students/${id}`
+      `https://student-management-system-ult0.onrender.com/api/students/${id}`
     );
 
     console.log("FULL STUDENT RESPONSE:", res.data);
@@ -83,7 +83,7 @@ function EditStudent() {
         console.log("Student Data:", student);
 
         const res = await axios.put(
-            `http://localhost:5000/api/students/${id}`,
+            `https://student-management-system-ult0.onrender.com/api/students/${id}`,
             student
         );
 

@@ -8,7 +8,7 @@ function StudentMarks() {
   const [activeTab, setActiveTab] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const API = "http://localhost:5000/api";
+  const API = "https://student-management-system-ult0.onrender.com/api";
 
   // =========================
   // LOAD STUDENT

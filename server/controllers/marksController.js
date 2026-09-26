@@ -11,11 +11,17 @@ const calculateInternalTotal = (internal) => {
     }
 
     const examMarks = Number(internal.examMarks || 0);
-    const assignmentMarks = Number(internal.assignmentMarks || 0);
+    const assignmentMarks = Number(
+        internal.assignmentMarks || 0
+    );
 
     return examMarks + assignmentMarks;
 };
 
+
+// ======================================================
+// CALCULATE GRADE
+// ======================================================
 
 const calculateGrade = (finalTotal) => {
     if (finalTotal >= 90) return "A+";
@@ -29,37 +35,85 @@ const calculateGrade = (finalTotal) => {
 };
 
 
+// ======================================================
+// CALCULATE RESULT
+// ======================================================
+
 const calculateResult = (finalTotal) => {
     return finalTotal >= 40 ? "Pass" : "Fail";
 };
 
 
+// ======================================================
+// CALCULATE MARKS
+// ======================================================
+
 const calculateMarks = (marks) => {
+
+    // Internal 1 total
     const internal1Total =
         calculateInternalTotal(marks.internal1);
 
+    // Internal 2 total
     const internal2Total =
         calculateInternalTotal(marks.internal2);
 
-    // Average only when both internals are available
-    let internalAverage = 0;
+    // --------------------------------------------------
+    // Internal Average
+    // --------------------------------------------------
 
-    if (marks.internal1 && marks.internal2) {
+    let internalAverage = null;
+
+    // Calculate average only when both
+    // Internal 1 and Internal 2 are available
+    if (
+        marks.internal1 &&
+        marks.internal2
+    ) {
         internalAverage =
             (internal1Total + internal2Total) / 2;
     }
 
-    const externalMarks =
-        Number(marks.externalMarks || 0);
+    // --------------------------------------------------
+    // External Marks
+    // --------------------------------------------------
 
-    const finalTotal =
-        internalAverage + externalMarks;
+    let externalMarks = null;
 
-    const grade =
-        calculateGrade(finalTotal);
+    if (
+        marks.externalMarks !== null &&
+        marks.externalMarks !== undefined
+    ) {
+        externalMarks =
+            Number(marks.externalMarks);
+    }
 
-    const result =
-        calculateResult(finalTotal);
+    // --------------------------------------------------
+    // Final Total / Grade / Result
+    // --------------------------------------------------
+
+    let finalTotal = null;
+    let grade = null;
+    let result = "Pending";
+
+    // Calculate final result only when:
+    // 1. Internal 1 exists
+    // 2. Internal 2 exists
+    // 3. External marks exist
+
+    if (
+        internalAverage !== null &&
+        externalMarks !== null
+    ) {
+        finalTotal =
+            internalAverage + externalMarks;
+
+        grade =
+            calculateGrade(finalTotal);
+
+        result =
+            calculateResult(finalTotal);
+    }
 
     return {
         internal1Total,
@@ -125,7 +179,7 @@ const getAllMarks = async (req, res) => {
                     calculated.internalAverage,
 
                 externalMarks:
-                    marks.externalMarks,
+                    calculated.externalMarks,
 
                 finalTotal:
                     calculated.finalTotal,
@@ -169,18 +223,21 @@ const getMarksById = async (req, res) => {
 
         const { id } = req.params;
 
-        if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (
+            !mongoose.Types.ObjectId.isValid(id)
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid marks ID"
             });
         }
 
-        const marks = await Marks.findById(id)
-            .populate(
-                "student",
-                "name rollNumber department semester email phone"
-            );
+        const marks =
+            await Marks.findById(id)
+                .populate(
+                    "student",
+                    "name rollNumber department semester email phone"
+                );
 
         if (!marks) {
             return res.status(404).json({
@@ -223,6 +280,9 @@ const getMarksById = async (req, res) => {
 
             internalAverage:
                 calculated.internalAverage,
+
+            externalMarks:
+                calculated.externalMarks,
 
             finalTotal:
                 calculated.finalTotal,
@@ -281,14 +341,19 @@ const addInternal1 = async (req, res) => {
             });
         }
 
-        if (!mongoose.Types.ObjectId.isValid(student)) {
+        if (
+            !mongoose.Types.ObjectId.isValid(student)
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid student ID"
             });
         }
 
-        if (!subject || !subject.trim()) {
+        if (
+            !subject ||
+            !subject.trim()
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "Subject is required"
@@ -304,19 +369,21 @@ const addInternal1 = async (req, res) => {
         const assignment =
             Number(assignmentMarks);
 
-        if (!Number.isInteger(semesterNumber) ||
-            semesterNumber <= 0) {
-
+        if (
+            !Number.isInteger(semesterNumber) ||
+            semesterNumber <= 0
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid semester"
             });
         }
 
-        if (!Number.isFinite(exam) ||
+        if (
+            !Number.isFinite(exam) ||
             exam < 0 ||
-            exam > 25) {
-
+            exam > 25
+        ) {
             return res.status(400).json({
                 success: false,
                 message:
@@ -324,10 +391,11 @@ const addInternal1 = async (req, res) => {
             });
         }
 
-        if (!Number.isFinite(assignment) ||
+        if (
+            !Number.isFinite(assignment) ||
             assignment < 0 ||
-            assignment > 5) {
-
+            assignment > 5
+        ) {
             return res.status(400).json({
                 success: false,
                 message:
@@ -354,12 +422,16 @@ const addInternal1 = async (req, res) => {
             marks = new Marks({
                 student,
                 semester: semesterNumber,
-                subjectId: subjectId || undefined,
-                subject: subject.trim(),
+                subjectId:
+                    subjectId || undefined,
+
+                subject:
+                    subject.trim(),
 
                 internal1: {
                     examMarks: exam,
-                    assignmentMarks: assignment
+                    assignmentMarks:
+                        assignment
                 },
 
                 internal2: null,
@@ -373,9 +445,10 @@ const addInternal1 = async (req, res) => {
             // Prevent duplicate Internal 1
             // -----------------------------------------
 
-            if (marks.internal1 !== null &&
-                marks.internal1 !== undefined) {
-
+            if (
+                marks.internal1 !== null &&
+                marks.internal1 !== undefined
+            ) {
                 return res.status(409).json({
                     success: false,
                     message:
@@ -385,11 +458,13 @@ const addInternal1 = async (req, res) => {
 
             marks.internal1 = {
                 examMarks: exam,
-                assignmentMarks: assignment
+                assignmentMarks:
+                    assignment
             };
 
             if (subjectId) {
-                marks.subjectId = subjectId;
+                marks.subjectId =
+                    subjectId;
             }
         }
 
@@ -407,6 +482,7 @@ const addInternal1 = async (req, res) => {
 
         res.status(201).json({
             success: true,
+
             message:
                 "Internal 1 marks saved successfully",
 
@@ -415,10 +491,14 @@ const addInternal1 = async (req, res) => {
 
                 internal1: {
                     examMarks:
-                        populatedMarks.internal1.examMarks,
+                        populatedMarks
+                            .internal1
+                            .examMarks,
 
                     assignmentMarks:
-                        populatedMarks.internal1.assignmentMarks,
+                        populatedMarks
+                            .internal1
+                            .assignmentMarks,
 
                     total:
                         calculated.internal1Total
@@ -426,6 +506,9 @@ const addInternal1 = async (req, res) => {
 
                 internalAverage:
                     calculated.internalAverage,
+
+                externalMarks:
+                    calculated.externalMarks,
 
                 finalTotal:
                     calculated.finalTotal,
@@ -480,14 +563,19 @@ const addInternal2 = async (req, res) => {
             });
         }
 
-        if (!mongoose.Types.ObjectId.isValid(student)) {
+        if (
+            !mongoose.Types.ObjectId.isValid(student)
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid student ID"
             });
         }
 
-        if (!subject || !subject.trim()) {
+        if (
+            !subject ||
+            !subject.trim()
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "Subject is required"
@@ -503,19 +591,21 @@ const addInternal2 = async (req, res) => {
         const assignment =
             Number(assignmentMarks);
 
-        if (!Number.isInteger(semesterNumber) ||
-            semesterNumber <= 0) {
-
+        if (
+            !Number.isInteger(semesterNumber) ||
+            semesterNumber <= 0
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid semester"
             });
         }
 
-        if (!Number.isFinite(exam) ||
+        if (
+            !Number.isFinite(exam) ||
             exam < 0 ||
-            exam > 25) {
-
+            exam > 25
+        ) {
             return res.status(400).json({
                 success: false,
                 message:
@@ -523,10 +613,11 @@ const addInternal2 = async (req, res) => {
             });
         }
 
-        if (!Number.isFinite(assignment) ||
+        if (
+            !Number.isFinite(assignment) ||
             assignment < 0 ||
-            assignment > 5) {
-
+            assignment > 5
+        ) {
             return res.status(400).json({
                 success: false,
                 message:
@@ -553,14 +644,18 @@ const addInternal2 = async (req, res) => {
             marks = new Marks({
                 student,
                 semester: semesterNumber,
-                subjectId: subjectId || undefined,
-                subject: subject.trim(),
+                subjectId:
+                    subjectId || undefined,
+
+                subject:
+                    subject.trim(),
 
                 internal1: null,
 
                 internal2: {
                     examMarks: exam,
-                    assignmentMarks: assignment
+                    assignmentMarks:
+                        assignment
                 },
 
                 externalMarks: null
@@ -572,9 +667,10 @@ const addInternal2 = async (req, res) => {
             // Prevent duplicate Internal 2
             // -----------------------------------------
 
-            if (marks.internal2 !== null &&
-                marks.internal2 !== undefined) {
-
+            if (
+                marks.internal2 !== null &&
+                marks.internal2 !== undefined
+            ) {
                 return res.status(409).json({
                     success: false,
                     message:
@@ -584,11 +680,13 @@ const addInternal2 = async (req, res) => {
 
             marks.internal2 = {
                 examMarks: exam,
-                assignmentMarks: assignment
+                assignmentMarks:
+                    assignment
             };
 
             if (subjectId) {
-                marks.subjectId = subjectId;
+                marks.subjectId =
+                    subjectId;
             }
         }
 
@@ -606,6 +704,7 @@ const addInternal2 = async (req, res) => {
 
         res.status(201).json({
             success: true,
+
             message:
                 "Internal 2 marks saved successfully",
 
@@ -614,10 +713,14 @@ const addInternal2 = async (req, res) => {
 
                 internal2: {
                     examMarks:
-                        populatedMarks.internal2.examMarks,
+                        populatedMarks
+                            .internal2
+                            .examMarks,
 
                     assignmentMarks:
-                        populatedMarks.internal2.assignmentMarks,
+                        populatedMarks
+                            .internal2
+                            .assignmentMarks,
 
                     total:
                         calculated.internal2Total
@@ -625,6 +728,9 @@ const addInternal2 = async (req, res) => {
 
                 internalAverage:
                     calculated.internalAverage,
+
+                externalMarks:
+                    calculated.externalMarks,
 
                 finalTotal:
                     calculated.finalTotal,
@@ -677,14 +783,19 @@ const addExternal = async (req, res) => {
             });
         }
 
-        if (!mongoose.Types.ObjectId.isValid(student)) {
+        if (
+            !mongoose.Types.ObjectId.isValid(student)
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid student ID"
             });
         }
 
-        if (!subject || !subject.trim()) {
+        if (
+            !subject ||
+            !subject.trim()
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "Subject is required"
@@ -697,19 +808,21 @@ const addExternal = async (req, res) => {
         const external =
             Number(externalMarks);
 
-        if (!Number.isInteger(semesterNumber) ||
-            semesterNumber <= 0) {
-
+        if (
+            !Number.isInteger(semesterNumber) ||
+            semesterNumber <= 0
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid semester"
             });
         }
 
-        if (!Number.isFinite(external) ||
+        if (
+            !Number.isFinite(external) ||
             external < 0 ||
-            external > 70) {
-
+            external > 70
+        ) {
             return res.status(400).json({
                 success: false,
                 message:
@@ -736,7 +849,7 @@ const addExternal = async (req, res) => {
         }
 
         // ---------------------------------------------
-        // Require both internals
+        // Require Internal 1
         // ---------------------------------------------
 
         if (!marks.internal1) {
@@ -746,6 +859,10 @@ const addExternal = async (req, res) => {
                     "Internal 1 marks are not entered yet."
             });
         }
+
+        // ---------------------------------------------
+        // Require Internal 2
+        // ---------------------------------------------
 
         if (!marks.internal2) {
             return res.status(400).json({
@@ -759,9 +876,10 @@ const addExternal = async (req, res) => {
         // Prevent duplicate external
         // ---------------------------------------------
 
-        if (marks.externalMarks !== null &&
-            marks.externalMarks !== undefined) {
-
+        if (
+            marks.externalMarks !== null &&
+            marks.externalMarks !== undefined
+        ) {
             return res.status(409).json({
                 success: false,
                 message:
@@ -769,7 +887,8 @@ const addExternal = async (req, res) => {
             });
         }
 
-        marks.externalMarks = external;
+        marks.externalMarks =
+            external;
 
         await marks.save();
 
@@ -785,6 +904,7 @@ const addExternal = async (req, res) => {
 
         res.status(201).json({
             success: true,
+
             message:
                 "External marks saved successfully",
 
@@ -793,10 +913,14 @@ const addExternal = async (req, res) => {
 
                 internal1: {
                     examMarks:
-                        populatedMarks.internal1.examMarks,
+                        populatedMarks
+                            .internal1
+                            .examMarks,
 
                     assignmentMarks:
-                        populatedMarks.internal1.assignmentMarks,
+                        populatedMarks
+                            .internal1
+                            .assignmentMarks,
 
                     total:
                         calculated.internal1Total
@@ -804,10 +928,14 @@ const addExternal = async (req, res) => {
 
                 internal2: {
                     examMarks:
-                        populatedMarks.internal2.examMarks,
+                        populatedMarks
+                            .internal2
+                            .examMarks,
 
                     assignmentMarks:
-                        populatedMarks.internal2.assignmentMarks,
+                        populatedMarks
+                            .internal2
+                            .assignmentMarks,
 
                     total:
                         calculated.internal2Total
@@ -852,9 +980,12 @@ const addExternal = async (req, res) => {
 const updateMarks = async (req, res) => {
     try {
 
-        const { id } = req.params;
+        const { id } =
+            req.params;
 
-        if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (
+            !mongoose.Types.ObjectId.isValid(id)
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid marks ID"
@@ -889,12 +1020,16 @@ const updateMarks = async (req, res) => {
             const semesterNumber =
                 Number(semester);
 
-            if (!Number.isInteger(semesterNumber) ||
-                semesterNumber <= 0) {
-
+            if (
+                !Number.isInteger(
+                    semesterNumber
+                ) ||
+                semesterNumber <= 0
+            ) {
                 return res.status(400).json({
                     success: false,
-                    message: "Invalid semester"
+                    message:
+                        "Invalid semester"
                 });
             }
 
@@ -908,7 +1043,9 @@ const updateMarks = async (req, res) => {
 
         if (subject !== undefined) {
 
-            if (!String(subject).trim()) {
+            if (
+                !String(subject).trim()
+            ) {
                 return res.status(400).json({
                     success: false,
                     message:
@@ -936,15 +1073,20 @@ const updateMarks = async (req, res) => {
         if (internal1 !== undefined) {
 
             const exam =
-                Number(internal1.examMarks);
+                Number(
+                    internal1.examMarks
+                );
 
             const assignment =
-                Number(internal1.assignmentMarks);
+                Number(
+                    internal1.assignmentMarks
+                );
 
-            if (!Number.isFinite(exam) ||
+            if (
+                !Number.isFinite(exam) ||
                 exam < 0 ||
-                exam > 25) {
-
+                exam > 25
+            ) {
                 return res.status(400).json({
                     success: false,
                     message:
@@ -952,10 +1094,13 @@ const updateMarks = async (req, res) => {
                 });
             }
 
-            if (!Number.isFinite(assignment) ||
+            if (
+                !Number.isFinite(
+                    assignment
+                ) ||
                 assignment < 0 ||
-                assignment > 5) {
-
+                assignment > 5
+            ) {
                 return res.status(400).json({
                     success: false,
                     message:
@@ -965,7 +1110,8 @@ const updateMarks = async (req, res) => {
 
             marks.internal1 = {
                 examMarks: exam,
-                assignmentMarks: assignment
+                assignmentMarks:
+                    assignment
             };
         }
 
@@ -976,15 +1122,20 @@ const updateMarks = async (req, res) => {
         if (internal2 !== undefined) {
 
             const exam =
-                Number(internal2.examMarks);
+                Number(
+                    internal2.examMarks
+                );
 
             const assignment =
-                Number(internal2.assignmentMarks);
+                Number(
+                    internal2.assignmentMarks
+                );
 
-            if (!Number.isFinite(exam) ||
+            if (
+                !Number.isFinite(exam) ||
                 exam < 0 ||
-                exam > 25) {
-
+                exam > 25
+            ) {
                 return res.status(400).json({
                     success: false,
                     message:
@@ -992,10 +1143,13 @@ const updateMarks = async (req, res) => {
                 });
             }
 
-            if (!Number.isFinite(assignment) ||
+            if (
+                !Number.isFinite(
+                    assignment
+                ) ||
                 assignment < 0 ||
-                assignment > 5) {
-
+                assignment > 5
+            ) {
                 return res.status(400).json({
                     success: false,
                     message:
@@ -1005,7 +1159,8 @@ const updateMarks = async (req, res) => {
 
             marks.internal2 = {
                 examMarks: exam,
-                assignmentMarks: assignment
+                assignmentMarks:
+                    assignment
             };
         }
 
@@ -1013,15 +1168,20 @@ const updateMarks = async (req, res) => {
         // External
         // ---------------------------------------------
 
-        if (externalMarks !== undefined) {
+        if (
+            externalMarks !== undefined
+        ) {
 
             const external =
                 Number(externalMarks);
 
-            if (!Number.isFinite(external) ||
+            if (
+                !Number.isFinite(
+                    external
+                ) ||
                 external < 0 ||
-                external > 70) {
-
+                external > 70
+            ) {
                 return res.status(400).json({
                     success: false,
                     message:
@@ -1043,10 +1203,13 @@ const updateMarks = async (req, res) => {
                 );
 
         const calculated =
-            calculateMarks(populatedMarks);
+            calculateMarks(
+                populatedMarks
+            );
 
         res.status(200).json({
             success: true,
+
             message:
                 "Marks updated successfully",
 
@@ -1057,13 +1220,18 @@ const updateMarks = async (req, res) => {
                     populatedMarks.internal1
                         ? {
                             examMarks:
-                                populatedMarks.internal1.examMarks,
+                                populatedMarks
+                                    .internal1
+                                    .examMarks,
 
                             assignmentMarks:
-                                populatedMarks.internal1.assignmentMarks,
+                                populatedMarks
+                                    .internal1
+                                    .assignmentMarks,
 
                             total:
-                                calculated.internal1Total
+                                calculated
+                                    .internal1Total
                         }
                         : null,
 
@@ -1071,13 +1239,18 @@ const updateMarks = async (req, res) => {
                     populatedMarks.internal2
                         ? {
                             examMarks:
-                                populatedMarks.internal2.examMarks,
+                                populatedMarks
+                                    .internal2
+                                    .examMarks,
 
                             assignmentMarks:
-                                populatedMarks.internal2.assignmentMarks,
+                                populatedMarks
+                                    .internal2
+                                    .assignmentMarks,
 
                             total:
-                                calculated.internal2Total
+                                calculated
+                                    .internal2Total
                         }
                         : null,
 
@@ -1120,9 +1293,12 @@ const updateMarks = async (req, res) => {
 const deleteMarks = async (req, res) => {
     try {
 
-        const { id } = req.params;
+        const { id } =
+            req.params;
 
-        if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (
+            !mongoose.Types.ObjectId.isValid(id)
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid marks ID"

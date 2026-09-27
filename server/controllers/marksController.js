@@ -20,6 +20,30 @@ const calculateInternalTotal = (internal) => {
 
 
 // ======================================================
+// ESCAPE REGEX
+// ======================================================
+
+const escapeRegex = (text) => {
+    return String(text).replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+    );
+};
+
+
+// ======================================================
+// CREATE CASE-INSENSITIVE SUBJECT REGEX
+// ======================================================
+
+const createSubjectRegex = (subject) => {
+    return new RegExp(
+        `^${escapeRegex(String(subject).trim())}$`,
+        "i"
+    );
+};
+
+
+// ======================================================
 // CALCULATE GRADE
 // ======================================================
 
@@ -50,11 +74,9 @@ const calculateResult = (finalTotal) => {
 
 const calculateMarks = (marks) => {
 
-    // Internal 1 total
     const internal1Total =
         calculateInternalTotal(marks.internal1);
 
-    // Internal 2 total
     const internal2Total =
         calculateInternalTotal(marks.internal2);
 
@@ -64,8 +86,6 @@ const calculateMarks = (marks) => {
 
     let internalAverage = null;
 
-    // Calculate average only when both
-    // Internal 1 and Internal 2 are available
     if (
         marks.internal1 &&
         marks.internal2
@@ -95,11 +115,6 @@ const calculateMarks = (marks) => {
     let finalTotal = null;
     let grade = null;
     let result = "Pending";
-
-    // Calculate final result only when:
-    // 1. Internal 1 exists
-    // 2. Internal 2 exists
-    // 3. External marks exist
 
     if (
         internalAverage !== null &&
@@ -352,7 +367,7 @@ const addInternal1 = async (req, res) => {
 
         if (
             !subject ||
-            !subject.trim()
+            !String(subject).trim()
         ) {
             return res.status(400).json({
                 success: false,
@@ -403,14 +418,21 @@ const addInternal1 = async (req, res) => {
             });
         }
 
+        const subjectName =
+            String(subject).trim();
+
+        const subjectRegex =
+            createSubjectRegex(subjectName);
+
         // ---------------------------------------------
-        // Find existing Marks document
+        // Find existing record
+        // Case-insensitive subject matching
         // ---------------------------------------------
 
         let marks = await Marks.findOne({
             student,
             semester: semesterNumber,
-            subject: subject.trim()
+            subject: subjectRegex
         });
 
         // ---------------------------------------------
@@ -426,7 +448,7 @@ const addInternal1 = async (req, res) => {
                     subjectId || undefined,
 
                 subject:
-                    subject.trim(),
+                    subjectName,
 
                 internal1: {
                     examMarks: exam,
@@ -461,6 +483,10 @@ const addInternal1 = async (req, res) => {
                 assignmentMarks:
                     assignment
             };
+
+            // Keep consistent subject name
+            marks.subject =
+                subjectName;
 
             if (subjectId) {
                 marks.subjectId =
@@ -574,7 +600,7 @@ const addInternal2 = async (req, res) => {
 
         if (
             !subject ||
-            !subject.trim()
+            !String(subject).trim()
         ) {
             return res.status(400).json({
                 success: false,
@@ -625,14 +651,21 @@ const addInternal2 = async (req, res) => {
             });
         }
 
+        const subjectName =
+            String(subject).trim();
+
+        const subjectRegex =
+            createSubjectRegex(subjectName);
+
         // ---------------------------------------------
-        // Find existing document
+        // Find existing record
+        // Case-insensitive subject matching
         // ---------------------------------------------
 
         let marks = await Marks.findOne({
             student,
             semester: semesterNumber,
-            subject: subject.trim()
+            subject: subjectRegex
         });
 
         // ---------------------------------------------
@@ -648,7 +681,7 @@ const addInternal2 = async (req, res) => {
                     subjectId || undefined,
 
                 subject:
-                    subject.trim(),
+                    subjectName,
 
                 internal1: null,
 
@@ -683,6 +716,10 @@ const addInternal2 = async (req, res) => {
                 assignmentMarks:
                     assignment
             };
+
+            // Keep consistent subject name
+            marks.subject =
+                subjectName;
 
             if (subjectId) {
                 marks.subjectId =
@@ -794,7 +831,7 @@ const addExternal = async (req, res) => {
 
         if (
             !subject ||
-            !subject.trim()
+            !String(subject).trim()
         ) {
             return res.status(400).json({
                 success: false,
@@ -807,6 +844,9 @@ const addExternal = async (req, res) => {
 
         const external =
             Number(externalMarks);
+
+        const subjectName =
+            String(subject).trim();
 
         if (
             !Number.isInteger(semesterNumber) ||
@@ -831,16 +871,20 @@ const addExternal = async (req, res) => {
         }
 
         // ---------------------------------------------
-        // Find marks record
+        // Case-insensitive subject search
         // ---------------------------------------------
 
-        const marks = await Marks.findOne({
-            student,
-            semester: semesterNumber,
-            subject: subject.trim()
-        });
+        const subjectRegex =
+            createSubjectRegex(subjectName);
 
-        if (!marks) {
+        const matchingRecords =
+            await Marks.find({
+                student,
+                semester: semesterNumber,
+                subject: subjectRegex
+            });
+
+        if (matchingRecords.length === 0) {
             return res.status(404).json({
                 success: false,
                 message:
@@ -849,10 +893,15 @@ const addExternal = async (req, res) => {
         }
 
         // ---------------------------------------------
-        // Require Internal 1
+        // Find Internal 1 record
         // ---------------------------------------------
 
-        if (!marks.internal1) {
+        const internal1Record =
+            matchingRecords.find(
+                (record) => record.internal1
+            );
+
+        if (!internal1Record) {
             return res.status(400).json({
                 success: false,
                 message:
@@ -861,10 +910,15 @@ const addExternal = async (req, res) => {
         }
 
         // ---------------------------------------------
-        // Require Internal 2
+        // Find Internal 2 record
         // ---------------------------------------------
 
-        if (!marks.internal2) {
+        const internal2Record =
+            matchingRecords.find(
+                (record) => record.internal2
+            );
+
+        if (!internal2Record) {
             return res.status(400).json({
                 success: false,
                 message:
@@ -873,7 +927,46 @@ const addExternal = async (req, res) => {
         }
 
         // ---------------------------------------------
-        // Prevent duplicate external
+        // Use Internal 1 as main record
+        // ---------------------------------------------
+
+        let marks =
+            internal1Record;
+
+        // ---------------------------------------------
+        // Merge Internal 2 if it is in another
+        // document because of old capitalization
+        // ---------------------------------------------
+
+        if (
+            internal1Record._id.toString() !==
+            internal2Record._id.toString()
+        ) {
+
+            marks.internal2 =
+                internal2Record.internal2;
+
+            marks.subject =
+                subjectName;
+
+            if (
+                !marks.subjectId &&
+                internal2Record.subjectId
+            ) {
+                marks.subjectId =
+                    internal2Record.subjectId;
+            }
+
+            await marks.save();
+
+            // Remove duplicate old record
+            await Marks.findByIdAndDelete(
+                internal2Record._id
+            );
+        }
+
+        // ---------------------------------------------
+        // Prevent duplicate external marks
         // ---------------------------------------------
 
         if (
@@ -887,10 +980,18 @@ const addExternal = async (req, res) => {
             });
         }
 
+        // ---------------------------------------------
+        // Save External Marks
+        // ---------------------------------------------
+
         marks.externalMarks =
             external;
 
         await marks.save();
+
+        // ---------------------------------------------
+        // Populate Student
+        // ---------------------------------------------
 
         const populatedMarks =
             await Marks.findById(marks._id)
@@ -899,8 +1000,16 @@ const addExternal = async (req, res) => {
                     "name rollNumber department semester email phone"
                 );
 
+        // ---------------------------------------------
+        // Calculate Marks
+        // ---------------------------------------------
+
         const calculated =
             calculateMarks(populatedMarks);
+
+        // ---------------------------------------------
+        // Response
+        // ---------------------------------------------
 
         res.status(201).json({
             success: true,

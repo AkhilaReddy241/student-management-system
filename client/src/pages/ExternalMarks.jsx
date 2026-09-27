@@ -3,7 +3,8 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 function ExternalMarks() {
-  const API = "https://student-management-system-ult0.onrender.com/api";
+  const API =
+    "https://student-management-system-ult0.onrender.com/api";
 
   const [students, setStudents] = useState([]);
   const [marks, setMarks] = useState([]);
@@ -99,10 +100,10 @@ function ExternalMarks() {
   };
 
   // =====================================================
-  // FIND MARKS RECORD
+  // FIND ALL MATCHING MARKS RECORDS
   // =====================================================
 
-  const findMarksRecord = (
+  const findMarksRecords = (
     studentId,
     semester,
     subject
@@ -112,13 +113,13 @@ function ExternalMarks() {
       !semester ||
       !subject
     ) {
-      return null;
+      return [];
     }
 
     const selectedSubject =
       subject.trim().toLowerCase();
 
-    return marks.find((item) => {
+    return marks.filter((item) => {
       const itemStudentId =
         getStudentId(item);
 
@@ -158,6 +159,10 @@ function ExternalMarks() {
 
   const saveExternal = async () => {
     try {
+      // -----------------------------------------------
+      // VALIDATION
+      // -----------------------------------------------
+
       if (
         !formData.student ||
         !formData.semester ||
@@ -186,33 +191,89 @@ function ExternalMarks() {
       }
 
       // -----------------------------------------------
-      // FIND SAME MARKS DOCUMENT
+      // FIND ALL MATCHING MARKS RECORDS
       // -----------------------------------------------
 
-      const existingRecord =
-        findMarksRecord(
+      const matchingRecords =
+        findMarksRecords(
           formData.student,
           formData.semester,
           formData.subject
         );
 
-      if (!existingRecord) {
+      console.log(
+        "Matching marks records:",
+        matchingRecords
+      );
+
+      // -----------------------------------------------
+      // NO RECORD
+      // -----------------------------------------------
+
+      if (
+        matchingRecords.length === 0
+      ) {
         toast.error(
           "No marks record found. Please enter Internal 1 and Internal 2 marks first."
         );
         return;
       }
 
-      console.log(
-        "Selected Marks Record:",
-        existingRecord
-      );
+      // -----------------------------------------------
+      // CHECK EXTERNAL ALREADY EXISTS
+      // -----------------------------------------------
+
+      const externalAlreadyExists =
+        matchingRecords.some(
+          (record) =>
+            record.externalMarks !==
+              undefined &&
+            record.externalMarks !==
+              null
+        );
+
+      if (externalAlreadyExists) {
+        toast.error(
+          "External marks already exist for this student and subject"
+        );
+        return;
+      }
 
       // -----------------------------------------------
       // CHECK INTERNAL 1
       // -----------------------------------------------
 
-      if (!existingRecord.internal1) {
+      const internal1Record =
+        matchingRecords.find(
+          (record) =>
+            record.internal1
+        );
+
+      // -----------------------------------------------
+      // CHECK INTERNAL 2
+      // -----------------------------------------------
+
+      const internal2Record =
+        matchingRecords.find(
+          (record) =>
+            record.internal2
+        );
+
+      console.log(
+        "Internal 1 Record:",
+        internal1Record
+      );
+
+      console.log(
+        "Internal 2 Record:",
+        internal2Record
+      );
+
+      // -----------------------------------------------
+      // INTERNAL 1 NOT FOUND
+      // -----------------------------------------------
+
+      if (!internal1Record) {
         toast.error(
           "Please enter Internal 1 marks first"
         );
@@ -220,10 +281,10 @@ function ExternalMarks() {
       }
 
       // -----------------------------------------------
-      // CHECK INTERNAL 2
+      // INTERNAL 2 NOT FOUND
       // -----------------------------------------------
 
-      if (!existingRecord.internal2) {
+      if (!internal2Record) {
         toast.error(
           "Please enter Internal 2 marks first"
         );
@@ -236,13 +297,13 @@ function ExternalMarks() {
 
       const internal1Exam =
         Number(
-          existingRecord.internal1
+          internal1Record.internal1
             ?.examMarks || 0
         );
 
       const internal1Assignment =
         Number(
-          existingRecord.internal1
+          internal1Record.internal1
             ?.assignmentMarks || 0
         );
 
@@ -256,13 +317,13 @@ function ExternalMarks() {
 
       const internal2Exam =
         Number(
-          existingRecord.internal2
+          internal2Record.internal2
             ?.examMarks || 0
         );
 
       const internal2Assignment =
         Number(
-          existingRecord.internal2
+          internal2Record.internal2
             ?.assignmentMarks || 0
         );
 
@@ -295,39 +356,31 @@ function ExternalMarks() {
       );
 
       // -----------------------------------------------
-      // CHECK EXTERNAL
-      // -----------------------------------------------
-
-      if (
-        existingRecord.externalMarks !==
-          undefined &&
-        existingRecord.externalMarks !==
-          null
-      ) {
-        toast.error(
-          "External marks already exist for this student and subject"
-        );
-        return;
-      }
-
-      // -----------------------------------------------
-      // SAVE EXTERNAL
+      // CREATE PAYLOAD
       // -----------------------------------------------
 
       const payload = {
-        student: formData.student,
-        semester: Number(
-          formData.semester
-        ),
+        student:
+          formData.student,
+
+        semester:
+          Number(formData.semester),
+
         subject:
           formData.subject.trim(),
-        externalMarks: external,
+
+        externalMarks:
+          external,
       };
 
       console.log(
         "External payload:",
         payload
       );
+
+      // -----------------------------------------------
+      // SEND TO BACKEND
+      // -----------------------------------------------
 
       const response =
         await axios.post(
@@ -340,11 +393,23 @@ function ExternalMarks() {
         response.data
       );
 
+      // -----------------------------------------------
+      // SUCCESS
+      // -----------------------------------------------
+
       toast.success(
         "External marks saved successfully"
       );
 
+      // -----------------------------------------------
+      // RESET FORM
+      // -----------------------------------------------
+
       resetForm();
+
+      // -----------------------------------------------
+      // RELOAD MARKS
+      // -----------------------------------------------
 
       await getMarks();
 
@@ -370,11 +435,15 @@ function ExternalMarks() {
     setEditingId(item._id);
 
     setFormData({
-      student: getStudentId(item),
+      student:
+        getStudentId(item),
+
       semester:
         item.semester || "",
+
       subject:
         item.subject || "",
+
       externalMarks:
         item.externalMarks ?? "",
     });
@@ -426,7 +495,8 @@ function ExternalMarks() {
         await axios.put(
           `${API}/marks/${editingId}`,
           {
-            externalMarks: external,
+            externalMarks:
+              external,
           }
         );
 
@@ -550,7 +620,8 @@ function ExternalMarks() {
       (item) =>
         item.externalMarks !==
           undefined &&
-        item.externalMarks !== null
+        item.externalMarks !==
+          null
     );
 
   // =====================================================
@@ -559,6 +630,10 @@ function ExternalMarks() {
 
   return (
     <div className="container-fluid mt-4">
+
+      {/* =================================================
+          TITLE
+      ================================================= */}
 
       <h2 className="text-center mb-4">
         External Marks Management
@@ -855,7 +930,7 @@ function ExternalMarks() {
                         : 0;
 
                     // =================================
-                    // USE BACKEND VALUE WHEN AVAILABLE
+                    // BACKEND INTERNAL AVERAGE
                     // =================================
 
                     const internalAverage =
@@ -878,7 +953,7 @@ function ExternalMarks() {
                       );
 
                     // =================================
-                    // FINAL
+                    // FINAL TOTAL
                     // =================================
 
                     const finalTotal =
@@ -921,6 +996,8 @@ function ExternalMarks() {
                         }
                       >
 
+                        {/* ROLL NUMBER */}
+
                         <td>
                           {
                             item.student
@@ -928,6 +1005,8 @@ function ExternalMarks() {
                             "-"
                           }
                         </td>
+
+                        {/* NAME */}
 
                         <td>
                           {
@@ -937,6 +1016,8 @@ function ExternalMarks() {
                           }
                         </td>
 
+                        {/* DEPARTMENT */}
+
                         <td>
                           {
                             item.student
@@ -945,6 +1026,8 @@ function ExternalMarks() {
                           }
                         </td>
 
+                        {/* SEMESTER */}
+
                         <td>
                           {
                             item.semester ||
@@ -952,12 +1035,16 @@ function ExternalMarks() {
                           }
                         </td>
 
+                        {/* SUBJECT */}
+
                         <td>
                           {
                             item.subject ||
                             "-"
                           }
                         </td>
+
+                        {/* INTERNAL 1 */}
 
                         <td>
                           <span className="badge bg-info text-dark">
@@ -968,6 +1055,8 @@ function ExternalMarks() {
                           </span>
                         </td>
 
+                        {/* INTERNAL 2 */}
+
                         <td>
                           <span className="badge bg-info text-dark">
                             {internal2Total.toFixed(
@@ -976,6 +1065,8 @@ function ExternalMarks() {
                             /30
                           </span>
                         </td>
+
+                        {/* INTERNAL AVERAGE */}
 
                         <td>
                           <span className="badge bg-primary">
@@ -986,6 +1077,8 @@ function ExternalMarks() {
                           </span>
                         </td>
 
+                        {/* EXTERNAL */}
+
                         <td>
                           <span className="badge bg-danger">
                             {external.toFixed(
@@ -994,6 +1087,8 @@ function ExternalMarks() {
                             /70
                           </span>
                         </td>
+
+                        {/* FINAL */}
 
                         <td>
                           <strong>
@@ -1004,6 +1099,8 @@ function ExternalMarks() {
                           </strong>
                         </td>
 
+                        {/* PERCENTAGE */}
+
                         <td>
                           <strong>
                             {percentage.toFixed(
@@ -1012,6 +1109,8 @@ function ExternalMarks() {
                             %
                           </strong>
                         </td>
+
+                        {/* GRADE */}
 
                         <td>
                           <span
@@ -1025,6 +1124,8 @@ function ExternalMarks() {
                           </span>
                         </td>
 
+                        {/* RESULT */}
+
                         <td>
                           <span
                             className={
@@ -1036,6 +1137,8 @@ function ExternalMarks() {
                             {result}
                           </span>
                         </td>
+
+                        {/* ACTION */}
 
                         <td>
 

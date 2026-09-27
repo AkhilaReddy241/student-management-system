@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 function FacultyLogin() {
-
   const navigate = useNavigate();
 
   const [faculty, setFaculty] = useState({
@@ -14,50 +13,36 @@ function FacultyLogin() {
 
   const [loading, setLoading] = useState(false);
 
-
   // ==========================================
   // INPUT CHANGE
   // ==========================================
 
   const handleChange = (e) => {
-
     setFaculty({
       ...faculty,
       [e.target.name]: e.target.value,
     });
-
   };
-
 
   // ==========================================
   // LOGIN
   // ==========================================
 
   const handleSubmit = async (e) => {
-
     e.preventDefault();
 
-
     if (!faculty.email.trim()) {
-
       toast.error("Please enter email");
-
       return;
     }
-
 
     if (!faculty.password) {
-
       toast.error("Please enter password");
-
       return;
     }
 
-
     try {
-
       setLoading(true);
-
 
       const res = await axios.post(
         "https://student-management-system-ult0.onrender.com/api/auth/faculty/login",
@@ -67,45 +52,33 @@ function FacultyLogin() {
         }
       );
 
-
       console.log(
         "Faculty Login Response:",
         res.data
       );
 
-
       if (res.data.success) {
-
         // Save JWT
-
         localStorage.setItem(
           "token",
           res.data.token
         );
 
-
         // Save role
-
         localStorage.setItem(
           "role",
           "faculty"
         );
 
-
         // Save faculty information
-
         localStorage.setItem(
           "faculty",
-          JSON.stringify(
-            res.data.faculty
-          )
+          JSON.stringify(res.data.faculty)
         );
-
 
         toast.success(
           "Faculty Login Successful"
         );
-
 
         /*
           For now we use the existing dashboard.
@@ -115,54 +88,40 @@ function FacultyLogin() {
         */
 
         navigate("/dashboard");
-
       }
-
     } catch (error) {
-
       console.log(
         "Faculty Login Error:",
         error.response?.data || error
       );
 
-
       toast.error(
         error.response?.data?.message ||
-        "Invalid email or password"
+          "Invalid email or password"
       );
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
-
   return (
-
     <div
       className="container mt-5"
       style={{
         maxWidth: "550px",
       }}
     >
-
       <div className="card shadow p-4">
 
         <h2 className="text-center mb-4">
           👨‍🏫 Faculty Login
         </h2>
 
-
         <form onSubmit={handleSubmit}>
-
 
           {/* EMAIL */}
 
           <div className="mb-3">
-
             <label className="form-label">
               Email
             </label>
@@ -174,15 +133,13 @@ function FacultyLogin() {
               name="email"
               value={faculty.email}
               onChange={handleChange}
+              disabled={loading}
             />
-
           </div>
-
 
           {/* PASSWORD */}
 
           <div className="mb-3">
-
             <label className="form-label">
               Password
             </label>
@@ -194,10 +151,26 @@ function FacultyLogin() {
               name="password"
               value={faculty.password}
               onChange={handleChange}
+              disabled={loading}
             />
-
           </div>
 
+          {/* FORGOT PASSWORD */}
+
+          <div className="text-end mb-3">
+            <button
+              type="button"
+              className="btn btn-link p-0"
+              onClick={() =>
+                navigate(
+                  "/faculty/forgot-password"
+                )
+              }
+              disabled={loading}
+            >
+              Forgot Password?
+            </button>
+          </div>
 
           {/* LOGIN */}
 
@@ -206,20 +179,20 @@ function FacultyLogin() {
             className="btn btn-success w-100"
             disabled={loading}
           >
-
             {loading
               ? "Logging in..."
               : "Faculty Login"}
-
           </button>
-
 
           {/* BACK */}
 
           <button
             type="button"
             className="btn btn-secondary w-100 mt-3"
-            onClick={() => navigate("/login")}
+            onClick={() =>
+              navigate("/login")
+            }
+            disabled={loading}
           >
             ← Back to Login Selection
           </button>
@@ -227,9 +200,7 @@ function FacultyLogin() {
         </form>
 
       </div>
-
     </div>
-
   );
 }
 

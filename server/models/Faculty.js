@@ -50,6 +50,16 @@ const facultySchema = new mongoose.Schema(
       required: true
     },
 
+    resetOTP: {
+      type: String,
+      default: null
+    },
+
+    resetOTPExpiry: {
+      type: Date,
+      default: null
+    },
+
     role: {
       type: String,
       default: "faculty"

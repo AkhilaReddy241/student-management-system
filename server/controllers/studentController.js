@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const Student = require("../models/Student");
+const transporter = require("../config/email");
 
 // =====================================================
 // CREATE STUDENT
@@ -38,10 +39,12 @@ const createStudent = async (req, res) => {
       });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     const existingStudent = await Student.findOne({
       $or: [
         { rollNumber: Number(rollNumber) },
-        { email: email.toLowerCase() },
+        { email: normalizedEmail },
       ],
     });
 
@@ -58,7 +61,7 @@ const createStudent = async (req, res) => {
     const student = await Student.create({
       rollNumber: Number(rollNumber),
       name,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       department,
       semester:
@@ -100,18 +103,13 @@ const getAllStudents = async (req, res) => {
       .sort({
         rollNumber: 1,
       });
- console.log(
-      "======================================"
-    );
 
-      console.log(
+    console.log("======================================");
+    console.log(
       "STUDENTS SORTED:",
       students.map((student) => student.rollNumber)
     );
-    console.log(
-      "======================================"
-    );
-
+    console.log("======================================");
 
     return res.status(200).json({
       count: students.length,
@@ -196,10 +194,6 @@ const updateStudent = async (req, res) => {
       address,
     } = req.body;
 
-    // -----------------------------------------------
-    // Validate roll number
-    // -----------------------------------------------
-
     if (
       rollNumber !== undefined &&
       rollNumber !== null &&
@@ -217,10 +211,6 @@ const updateStudent = async (req, res) => {
         });
       }
     }
-
-    // -----------------------------------------------
-    // Check duplicate roll number
-    // -----------------------------------------------
 
     if (
       rollNumber !== undefined &&
@@ -240,13 +230,9 @@ const updateStudent = async (req, res) => {
       }
     }
 
-    // -----------------------------------------------
-    // Check duplicate email
-    // -----------------------------------------------
-
     if (email) {
       const existingEmail = await Student.findOne({
-        email: email.toLowerCase(),
+        email: email.trim().toLowerCase(),
         _id: { $ne: id },
       });
 
@@ -257,10 +243,6 @@ const updateStudent = async (req, res) => {
         });
       }
     }
-
-    // -----------------------------------------------
-    // Build update object
-    // -----------------------------------------------
 
     const updateData = {};
 
@@ -273,7 +255,7 @@ const updateStudent = async (req, res) => {
     }
 
     if (email !== undefined) {
-      updateData.email = email;
+      updateData.email = email.trim().toLowerCase();
     }
 
     if (department !== undefined) {
@@ -291,10 +273,6 @@ const updateStudent = async (req, res) => {
     if (address !== undefined) {
       updateData.address = address;
     }
-
-    // -----------------------------------------------
-    // Update
-    // -----------------------------------------------
 
     const updatedStudent = await Student.findByIdAndUpdate(
       id,
@@ -401,10 +379,12 @@ const registerStudent = async (req, res) => {
       });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     const existingStudent = await Student.findOne({
       $or: [
         { rollNumber: Number(rollNumber) },
-        { email: email.toLowerCase() },
+        { email: normalizedEmail },
       ],
     });
 
@@ -424,7 +404,7 @@ const registerStudent = async (req, res) => {
     const student = await Student.create({
       rollNumber: Number(rollNumber),
       name,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       department,
       semester:
@@ -478,7 +458,7 @@ const loginStudent = async (req, res) => {
     }
 
     const student = await Student.findOne({
-      email: email.toLowerCase(),
+      email: email.trim().toLowerCase(),
     });
 
     if (!student) {
@@ -646,7 +626,7 @@ const getProfile = async (req, res) => {
 
 
 // =====================================================
-// RESET STUDENT PASSWORD
+// OLD RESET STUDENT PASSWORD
 // PUT /api/students/reset-password
 // =====================================================
 
@@ -671,7 +651,7 @@ const resetStudentPassword = async (req, res) => {
     }
 
     const student = await Student.findOne({
-      email: email.toLowerCase(),
+      email: email.trim().toLowerCase(),
     });
 
     if (!student) {
@@ -733,10 +713,6 @@ const changeStudentPassword = async (req, res) => {
       confirmPassword,
     } = req.body;
 
-    // -----------------------------------------------
-    // Validate fields
-    // -----------------------------------------------
-
     if (
       !currentPassword ||
       !newPassword ||
@@ -748,10 +724,6 @@ const changeStudentPassword = async (req, res) => {
       });
     }
 
-    // -----------------------------------------------
-    // Confirm password
-    // -----------------------------------------------
-
     if (newPassword !== confirmPassword) {
       return res.status(400).json({
         success: false,
@@ -760,10 +732,6 @@ const changeStudentPassword = async (req, res) => {
       });
     }
 
-    // -----------------------------------------------
-    // Minimum password length
-    // -----------------------------------------------
-
     if (newPassword.length < 6) {
       return res.status(400).json({
         success: false,
@@ -771,10 +739,6 @@ const changeStudentPassword = async (req, res) => {
           "New password must be at least 6 characters long",
       });
     }
-
-    // -----------------------------------------------
-    // Find student
-    // -----------------------------------------------
 
     const student = await Student.findById(
       req.user.id
@@ -787,10 +751,6 @@ const changeStudentPassword = async (req, res) => {
       });
     }
 
-    // -----------------------------------------------
-    // Check current password
-    // -----------------------------------------------
-
     const isMatch = await bcrypt.compare(
       currentPassword,
       student.password
@@ -802,10 +762,6 @@ const changeStudentPassword = async (req, res) => {
         message: "Current password is incorrect",
       });
     }
-
-    // -----------------------------------------------
-    // Prevent same password
-    // -----------------------------------------------
 
     const samePassword = await bcrypt.compare(
       newPassword,
@@ -820,18 +776,10 @@ const changeStudentPassword = async (req, res) => {
       });
     }
 
-    // -----------------------------------------------
-    // Hash new password
-    // -----------------------------------------------
-
     const hashedPassword = await bcrypt.hash(
       newPassword,
       10
     );
-
-    // -----------------------------------------------
-    // Update password
-    // -----------------------------------------------
 
     await Student.updateOne(
       { _id: student._id },
@@ -861,6 +809,259 @@ const changeStudentPassword = async (req, res) => {
 
 
 // =====================================================
+// FORGOT PASSWORD
+// POST /api/students/forgot-password
+// =====================================================
+
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const student = await Student.findOne({
+      email: normalizedEmail,
+    });
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Student with this email does not exist",
+      });
+    }
+
+    const otp = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+
+    student.resetOTP = otp;
+
+    student.resetOTPExpiry = new Date(
+      Date.now() + 10 * 60 * 1000
+    );
+
+    await student.save();
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: student.email,
+      subject:
+        "Student Management System - Password Reset OTP",
+      text:
+        `Your password reset OTP is ${otp}. ` +
+        `This OTP is valid for 10 minutes.`,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP sent successfully to your email",
+    });
+  } catch (error) {
+    console.error(
+      "STUDENT FORGOT PASSWORD ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send OTP",
+    });
+  }
+};
+
+
+// =====================================================
+// VERIFY OTP
+// POST /api/students/verify-otp
+// =====================================================
+
+const verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and OTP are required",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const student = await Student.findOne({
+      email: normalizedEmail,
+    });
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Student with this email does not exist",
+      });
+    }
+
+    if (
+      !student.resetOTP ||
+      !student.resetOTPExpiry
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "OTP not found. Please request a new OTP",
+      });
+    }
+
+    if (new Date() > student.resetOTPExpiry) {
+      student.resetOTP = null;
+      student.resetOTPExpiry = null;
+
+      await student.save();
+
+      return res.status(400).json({
+        success: false,
+        message:
+          "OTP has expired. Please request a new OTP",
+      });
+    }
+
+    if (student.resetOTP !== otp.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP verified successfully",
+    });
+  } catch (error) {
+    console.error(
+      "STUDENT VERIFY OTP ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+
+// =====================================================
+// RESET PASSWORD WITH OTP
+// POST /api/students/reset-password
+// =====================================================
+
+const resetPassword = async (req, res) => {
+  try {
+    const {
+      email,
+      otp,
+      newPassword,
+    } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Email, OTP and new password are required",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Password must be at least 6 characters",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const student = await Student.findOne({
+      email: normalizedEmail,
+    });
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Student with this email does not exist",
+      });
+    }
+
+    if (
+      !student.resetOTP ||
+      !student.resetOTPExpiry
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "OTP not found. Please request a new OTP",
+      });
+    }
+
+    if (new Date() > student.resetOTPExpiry) {
+      student.resetOTP = null;
+      student.resetOTPExpiry = null;
+
+      await student.save();
+
+      return res.status(400).json({
+        success: false,
+        message:
+          "OTP has expired. Please request a new OTP",
+      });
+    }
+
+    if (student.resetOTP !== otp.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(
+      newPassword,
+      10
+    );
+
+    student.password = hashedPassword;
+
+    student.resetOTP = null;
+    student.resetOTPExpiry = null;
+
+    await student.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successfully",
+    });
+  } catch (error) {
+    console.error(
+      "STUDENT RESET PASSWORD ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+
+// =====================================================
 // EXPORTS
 // =====================================================
 
@@ -873,6 +1074,13 @@ module.exports = {
   registerStudent,
   loginStudent,
   getProfile,
+
+  // Existing password functions
   resetStudentPassword,
   changeStudentPassword,
+
+  // OTP password reset functions
+  forgotPassword,
+  verifyOTP,
+  resetPassword,
 };

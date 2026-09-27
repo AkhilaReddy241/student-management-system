@@ -1,30 +1,89 @@
 const express = require("express");
+
 const router = express.Router();
 
 const {
   registerAdmin,
   loginAdmin,
+  forgotPassword,
+    verifyOTP, 
+     resetPassword,
   getProfile,
   updateProfile,
   changePassword,
-    generateStudentPasswords,
+  generateStudentPasswords,
 } = require("../controllers/adminController");
 
 const authMiddleware = require("../middleware/authMiddleware");
+
 const allowRoles = require("../middleware/roleMiddleware");
 
-// Register Admin
+// =====================================================
+// REGISTER ADMIN
+// =====================================================
+
 router.post("/register", registerAdmin);
 
-// Login Admin
+// =====================================================
+// LOGIN ADMIN
+// =====================================================
+
 router.post("/login", loginAdmin);
 
-router.get("/profile", authMiddleware, getProfile);
+// =====================================================
+// FORGOT PASSWORD
+// =====================================================
 
-router.put("/profile", authMiddleware, updateProfile);
+router.post("/forgot-password", forgotPassword);
+
+
+// =====================================================
+// VERIFY OTP
+// =====================================================
+
+router.post("/verify-otp", verifyOTP);
+
+
+// =====================================================
+// RESET PASSWORD
+// =====================================================
+
+router.post("/reset-password", resetPassword);
+
+
+// =====================================================
+// GET ADMIN PROFILE
+// =====================================================
+
+router.get(
+  "/profile",
+  authMiddleware,
+  getProfile
+);
+
+// =====================================================
+// UPDATE ADMIN PROFILE
+// =====================================================
 
 router.put(
-  "/change-password",  authMiddleware,  changePassword);
+  "/profile",
+  authMiddleware,
+  updateProfile
+);
+
+// =====================================================
+// CHANGE PASSWORD
+// =====================================================
+
+router.put(
+  "/change-password",
+  authMiddleware,
+  changePassword
+);
+
+// =====================================================
+// GENERATE STUDENT PASSWORDS
+// =====================================================
 
 router.post(
   "/generate-student-passwords",
@@ -32,5 +91,9 @@ router.post(
   allowRoles("admin"),
   generateStudentPasswords
 );
+
+// =====================================================
+// EXPORT
+// =====================================================
 
 module.exports = router;

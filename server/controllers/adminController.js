@@ -2,6 +2,7 @@ const Admin = require("../models/Admin");
 const Student = require("../models/Student");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const transporter = require("../config/email");
 
 // =====================================================
 // REGISTER ADMIN
@@ -58,7 +59,6 @@ const registerAdmin = async (req, res) => {
     });
 
   } catch (error) {
-
     console.error(
       "REGISTER ADMIN ERROR:",
       error
@@ -78,7 +78,6 @@ const registerAdmin = async (req, res) => {
 
 const loginAdmin = async (req, res) => {
   try {
-
     const {
       username,
       password,
@@ -155,9 +154,257 @@ const loginAdmin = async (req, res) => {
     });
 
   } catch (error) {
-
     console.error(
       "LOGIN ADMIN ERROR:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+
+// =====================================================
+// FORGOT PASSWORD
+// =====================================================
+
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Validation
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    // Find admin
+    const admin = await Admin.findOne({
+      email: email.toLowerCase(),
+    });
+
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin with this email does not exist",
+      });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+
+    // Store OTP and expiry time
+    admin.resetOTP = otp;
+
+    admin.resetOTPExpiry = new Date(
+      Date.now() + 10 * 60 * 1000
+    );
+
+    await admin.save();
+
+    // Send OTP email
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: admin.email,
+      subject:
+        "Student Management System - Password Reset OTP",
+
+      text:
+        `Your password reset OTP is ${otp}. ` +
+        `This OTP is valid for 10 minutes.`,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "OTP sent successfully to your email",
+    });
+
+  } catch (error) {
+    console.error(
+      "FORGOT PASSWORD ERROR:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to send OTP",
+    });
+  }
+};
+
+
+// =====================================================
+// VERIFY OTP
+// =====================================================
+
+const verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    // Validation
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and OTP are required",
+      });
+    }
+
+    // Find admin
+    const admin = await Admin.findOne({
+      email: email.toLowerCase(),
+    });
+
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin with this email does not exist",
+      });
+    }
+
+    // Check whether OTP exists
+    if (!admin.resetOTP || !admin.resetOTPExpiry) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP not found. Please request a new OTP",
+      });
+    }
+
+    // Check OTP expiry
+    if (new Date() > admin.resetOTPExpiry) {
+      admin.resetOTP = null;
+      admin.resetOTPExpiry = null;
+
+      await admin.save();
+
+      return res.status(400).json({
+        success: false,
+        message: "OTP has expired. Please request a new OTP",
+      });
+    }
+
+    // Check OTP
+    if (admin.resetOTP !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP",
+      });
+    }
+
+    // OTP is correct
+    res.status(200).json({
+      success: true,
+      message: "OTP verified successfully",
+    });
+
+  } catch (error) {
+    console.error(
+      "VERIFY OTP ERROR:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+
+// =====================================================
+// RESET PASSWORD
+// =====================================================
+
+const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    // Validation
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Email, OTP and new password are required",
+      });
+    }
+
+    // Find admin
+    const admin = await Admin.findOne({
+      email: email.toLowerCase(),
+    });
+
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin with this email does not exist",
+      });
+    }
+
+    // Check OTP
+    if (!admin.resetOTP || !admin.resetOTPExpiry) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP not found. Please request a new OTP",
+      });
+    }
+
+    // Check OTP expiry
+    if (new Date() > admin.resetOTPExpiry) {
+      admin.resetOTP = null;
+      admin.resetOTPExpiry = null;
+
+      await admin.save();
+
+      return res.status(400).json({
+        success: false,
+        message: "OTP has expired. Please request a new OTP",
+      });
+    }
+
+    // Check OTP
+    if (admin.resetOTP !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP",
+      });
+    }
+
+    // Validate password length
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(
+      newPassword,
+      10
+    );
+
+    // Update password
+    admin.password = hashedPassword;
+
+    // Clear OTP after successful password reset
+    admin.resetOTP = null;
+    admin.resetOTPExpiry = null;
+
+    await admin.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset successfully",
+    });
+
+  } catch (error) {
+    console.error(
+      "RESET PASSWORD ERROR:",
       error
     );
 
@@ -183,11 +430,14 @@ const getProfile = async (req, res) => {
     if (!req.user || !req.user.id) {
       return res.status(401).json({
         success: false,
-        message: "User authentication information missing",
+        message:
+          "User authentication information missing",
       });
     }
 
-    const admin = await Admin.findById(req.user.id).select("-password");
+    const admin = await Admin.findById(
+      req.user.id
+    ).select("-password");
 
     if (!admin) {
       return res.status(404).json({
@@ -202,7 +452,10 @@ const getProfile = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("GET ADMIN PROFILE ERROR:", error);
+    console.error(
+      "GET ADMIN PROFILE ERROR:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
@@ -218,7 +471,6 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-
     if (!req.user || !req.user.id) {
       return res.status(401).json({
         success: false,
@@ -265,7 +517,6 @@ const updateProfile = async (req, res) => {
     });
 
   } catch (error) {
-
     console.error(
       "UPDATE ADMIN PROFILE ERROR:",
       error
@@ -285,7 +536,6 @@ const updateProfile = async (req, res) => {
 
 const changePassword = async (req, res) => {
   try {
-
     if (!req.user || !req.user.id) {
       return res.status(401).json({
         success: false,
@@ -356,7 +606,6 @@ const changePassword = async (req, res) => {
     });
 
   } catch (error) {
-
     console.error(
       "CHANGE PASSWORD ERROR:",
       error
@@ -400,7 +649,10 @@ const generateStudentPasswords = async (req, res) => {
 
     for (const student of students) {
       // Make sure roll number exists
-      if (student.rollNumber === undefined || student.rollNumber === null) {
+      if (
+        student.rollNumber === undefined ||
+        student.rollNumber === null
+      ) {
         console.log(
           `Skipping student ${student._id} because rollNumber is missing`
         );
@@ -409,13 +661,15 @@ const generateStudentPasswords = async (req, res) => {
       }
 
       // Temporary password
-      const temporaryPassword = `STU@${student.rollNumber}`;
+      const temporaryPassword =
+        `STU@${student.rollNumber}`;
 
       // Hash password
-      const hashedPassword = await bcrypt.hash(
-        temporaryPassword,
-        10
-      );
+      const hashedPassword =
+        await bcrypt.hash(
+          temporaryPassword,
+          10
+        );
 
       // Update ONLY password
       await Student.updateOne(
@@ -439,16 +693,19 @@ const generateStudentPasswords = async (req, res) => {
     if (credentials.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "No students with valid roll numbers were found",
+        message:
+          "No students with valid roll numbers were found",
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: "Student passwords generated successfully",
+      message:
+        "Student passwords generated successfully",
       count: credentials.length,
       credentials,
     });
+
   } catch (error) {
     console.error(
       "GENERATE STUDENT PASSWORDS ERROR:",
@@ -462,6 +719,7 @@ const generateStudentPasswords = async (req, res) => {
   }
 };
 
+
 // =====================================================
 // EXPORT
 // =====================================================
@@ -469,8 +727,11 @@ const generateStudentPasswords = async (req, res) => {
 module.exports = {
   registerAdmin,
   loginAdmin,
+  forgotPassword,
+    verifyOTP,
+    resetPassword,
   getProfile,
   updateProfile,
   changePassword,
-    generateStudentPasswords,
+  generateStudentPasswords,
 };

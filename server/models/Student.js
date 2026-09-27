@@ -50,7 +50,17 @@ const studentSchema = new mongoose.Schema(
         address: {
             type: String,
             trim: true
-        }
+        },
+
+       resetOTP: {
+  type: String,
+  default: null
+},
+
+resetOTPExpiry: {
+  type: Date,
+  default: null
+},
 
     },
     {

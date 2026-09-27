@@ -324,7 +324,7 @@ function StudentLogin() {
               {/* PASSWORD */}
               {/* =============================== */}
 
-              <div className="mb-3">
+              <div className="mb-2">
 
                 <label className="form-label">
                   Password
@@ -342,6 +342,27 @@ function StudentLogin() {
                   }
                   disabled={loading}
                 />
+
+              </div>
+
+              {/* =============================== */}
+              {/* FORGOT PASSWORD */}
+              {/* =============================== */}
+
+              <div className="text-end mb-3">
+
+                <button
+                  type="button"
+                  className="btn btn-link p-0"
+                  onClick={() =>
+                    navigate(
+                      "/student/forgot-password"
+                    )
+                  }
+                  disabled={loading}
+                >
+                  Forgot Password?
+                </button>
 
               </div>
 

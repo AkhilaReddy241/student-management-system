@@ -164,7 +164,7 @@ function AdminLogin() {
 
           {/* PASSWORD */}
 
-          <div className="mb-3">
+          <div className="mb-2">
 
             <label className="form-label">
               Password
@@ -178,6 +178,21 @@ function AdminLogin() {
               value={admin.password}
               onChange={handleChange}
             />
+
+          </div>
+
+
+          {/* FORGOT PASSWORD */}
+
+          <div className="text-end mb-3">
+
+            <button
+              type="button"
+              className="btn btn-link p-0"
+              onClick={() => navigate("/admin/forgot-password")}
+            >
+              Forgot Password?
+            </button>
 
           </div>
 

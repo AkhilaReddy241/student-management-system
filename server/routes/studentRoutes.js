@@ -15,6 +15,11 @@ const {
   getProfile,
   resetStudentPassword,
   changeStudentPassword,
+
+  // Forgot password functions
+  forgotPassword,
+  verifyOTP,
+  resetPassword,
 } = require("../controllers/studentController");
 
 const authenticateStudent =
@@ -43,7 +48,37 @@ router.post(
 );
 
 // =====================================================
-// RESET STUDENT PASSWORD
+// FORGOT PASSWORD
+// POST /api/students/forgot-password
+// =====================================================
+
+router.post(
+  "/forgot-password",
+  forgotPassword
+);
+
+// =====================================================
+// VERIFY OTP
+// POST /api/students/verify-otp
+// =====================================================
+
+router.post(
+  "/verify-otp",
+  verifyOTP
+);
+
+// =====================================================
+// RESET PASSWORD WITH OTP
+// POST /api/students/reset-password
+// =====================================================
+
+router.post(
+  "/reset-password",
+  resetPassword
+);
+
+// =====================================================
+// OLD RESET STUDENT PASSWORD
 // PUT /api/students/reset-password
 // =====================================================
 

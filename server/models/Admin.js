@@ -17,6 +17,17 @@ const adminSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+
+ resetOTP: {
+    type: String,
+    default: null,
+  },
+
+  resetOTPExpiry: {
+    type: Date,
+    default: null,
+  },
+
 });
 
 module.exports = mongoose.model("Admin", adminSchema);

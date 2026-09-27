@@ -8,8 +8,11 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import AdminLogin from "./pages/AdminLogin";
+import AdminForgotPassword from "./pages/AdminForgotPassword";
 import FacultyLogin from "./pages/FacultyLogin";
+import FacultyForgotPassword from "./pages/FacultyForgotPassword";
 import StudentLogin from "./pages/StudentLogin";
+import StudentForgotPassword from "./pages/StudentForgotPassword";
 import Dashboard from "./pages/Dashboard";
 import Unauthorized from "./pages/Unauthorized";
 
@@ -47,13 +50,9 @@ import Faculty from "./pages/Faculty";
 import AddFaculty from "./pages/AddFaculty";
 import SubjectManagement from "./pages/SubjectManagement";
 
-
 function App() {
-
   return (
-
     <BrowserRouter>
-
       <Navbar />
 
       <Routes>
@@ -78,14 +77,35 @@ function App() {
           element={<AdminLogin />}
         />
 
+        {/* ADMIN FORGOT PASSWORD */}
+
+        <Route
+          path="/admin/forgot-password"
+          element={<AdminForgotPassword />}
+        />
+
         <Route
           path="/faculty-login"
           element={<FacultyLogin />}
         />
 
+        {/* FACULTY FORGOT PASSWORD */}
+
+        <Route
+          path="/faculty/forgot-password"
+          element={<FacultyForgotPassword />}
+        />
+
         <Route
           path="/student-login"
           element={<StudentLogin />}
+        />
+
+        {/* STUDENT FORGOT PASSWORD */}
+
+        <Route
+          path="/student/forgot-password"
+          element={<StudentForgotPassword />}
         />
 
 
@@ -206,7 +226,7 @@ function App() {
               allowedRoles={[
                 "admin",
                 "faculty",
-                "student"
+                "student",
               ]}
             >
               <Profile />
@@ -367,7 +387,6 @@ function App() {
         />
 
       </Routes>
-
     </BrowserRouter>
   );
 }
